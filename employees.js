@@ -1,9 +1,13 @@
 const mysql = require("mysql2/promise");
 const inquirer = require("inquirer");
 
+
+// const PORT = process.env.PORT || 8080;
+let connection;
+
 const main = async () => {
     try {
-        const connection = await mysql.createConnection({
+        connection = await mysql.createConnection({
             host: "localhost",
             port: 3306,
             user: "root",
@@ -13,11 +17,12 @@ const main = async () => {
 
         console.log(`Connected to db with id: ${connection.threadId}`);
         await userPrompt(connection);
-       
+
     } catch (error) {
         console.log(error);
     }
 };
+
 
 const viewDepartments = async (connection) => {
     const sqlQuery = "SELECT * FROM department";
@@ -27,7 +32,15 @@ const viewDepartments = async (connection) => {
     console.table(rows);
 
     userPrompt(connection);
-}
+};
+
+const viewDepartmentsNoPrompt = async (connection) => {
+    const sqlQuery = "SELECT * FROM department";
+
+    const [rows, fields] = await connection.query(sqlQuery);
+
+    console.table(rows);
+};
 
 const viewRoles = async (connection) => {
     const sqlQuery = "SELECT * FROM role";
@@ -37,7 +50,15 @@ const viewRoles = async (connection) => {
     console.table(rows);
 
     userPrompt(connection);
-}
+};
+
+const viewRolesNpPrompt = async (connection) => {
+    const sqlQuery = "SELECT * FROM role";
+
+    const [rows, fields] = await connection.query(sqlQuery);
+
+    console.table(rows);
+};
 
 const viewEmployees = async (connection) => {
     const sqlQuery = "SELECT * FROM employee";
@@ -47,7 +68,16 @@ const viewEmployees = async (connection) => {
     console.table(rows);
 
     userPrompt(connection);
-}
+};
+
+const viewEmployeesNoPrompt = async (connection) => {
+    const sqlQuery = "SELECT * FROM employee";
+
+    const [rows, fields] = await connection.query(sqlQuery);
+
+    console.table(rows);
+
+};
 
 async function userPrompt(connection) {
     const userInput = await inquirer
@@ -116,7 +146,7 @@ async function userPrompt(connection) {
         default:
             console.log("Please chose an Employee to add.");
     }
-}
+};
 
 const addEmployee = async (connection) => {
     try {
@@ -128,10 +158,10 @@ const addEmployee = async (connection) => {
         console.log("Adding Employee....................");
         const sqlQuery = "INSERT INTO employee SET ?";
         const params = {
-            first_name: `${employeeInfo.userInput.firstName}`, 
-            last_name: `${employeeInfo.userInput.lastName}`, 
-            role_id: employeeInfo.roleID.id, 
-            manager_id: employeeInfo.managerID.id
+            first_name: `${employeeInfo.userInput.firstName}`,
+            last_name: `${employeeInfo.userInput.lastName}`,
+            role_id: employeeInfo.roleID.id,
+            manager_id: employeeInfo.managerID
         }
 
         const [rows, fields] = await connection.query(sqlQuery, params);
@@ -141,10 +171,52 @@ const addEmployee = async (connection) => {
         console.log(error);
     }
 
+    await viewEmployeesNoPrompt(connection);
     userPrompt(connection);
-}
+};
+
+const addDepartment = async (connection) => {
+    try {
+        await viewDepartmentsNoPrompt(connection);
+
+        const departmentName = await getDepartmentInfo(connection);
+
+        const sqlQuery = "INSERT INTO department SET ?";
+        const params = {
+            name: `${departmentName.userInput.departmentName}`,
+        }
+
+        const [rows, fields] = await connection.query(sqlQuery, params);
+
+        console.table(rows);
+
+        await viewDepartmentsNoPrompt(connection);
+    } catch (error) {
+        console.log(error);
+    }
+};
 
 
+const addRole = async (connection) => {
+    try {
+        await viewRoleNoPrompt(connection);
+
+        const departmentName = await getRoleInfo(connection);
+
+        const sqlQuery = "INSERT INTO role SET ?";
+        const params = {
+            name: `${roleName.userInput.roleName}`,
+        }
+
+        const [rows, fields] = await connection.query(sqlQuery, params);
+
+        console.table(rows);
+
+        await viewDepartmentsNoPrompt(connection);
+    } catch (error) {
+        console.log(error);
+    }
+};
 const getEmployeeInfo = async (connection) => {
     const userInput = await inquirer
         .prompt([
@@ -169,6 +241,7 @@ const getEmployeeInfo = async (connection) => {
                     for (let i = 0; i < rows.length; i++) {
                         employees.push(rows[i].first_name + " " + rows[i].last_name);
                     }
+                    employees.push("None");
                     console.log(rows);
                     console.log(employees);
                     return employees;
@@ -194,6 +267,7 @@ const getEmployeeInfo = async (connection) => {
     const managerID = await getManagerID(connection, userInput);
     const roleID = await getRoleID(connection, userInput);
 
+    console.log("-----------------------------" + managerID);
     return { userInput, managerID, roleID }
 }
 
@@ -217,7 +291,36 @@ const getRoles = async (connection) => {
     return rows;
 }
 
+const getDepartmentInfoDelete = async (connection) => {
+    const userInput = await inquirer
+        .prompt([
+            {
+                type: "input",
+                name: "departmentName",
+                message: "What is the name of the Department you would like to delete?"
+            }
+        ])
+    return userInput;
+};
+
+const getDepartmentInfo = async (connection) => {
+    const userInput = await inquirer
+        .prompt([
+            {
+                type: "input",
+                name: "departmentName",
+                message: "What is the name of the Department you would like to add?"
+            }
+        ])
+    return userInput;
+};
+
+
 const getManagerID = async (connection, userInput) => {
+    if (userInput.selectedManager === "None") {
+        return null;
+    }
+
     sqlQuery = "SELECT id FROM employee WHERE ? AND ?"
     lastName = userInput.selectedManager.split(" ")[1];
     firstName = userInput.selectedManager.split(" ")[0];
@@ -228,7 +331,7 @@ const getManagerID = async (connection, userInput) => {
 
     console.table(rows)
 
-    return rows[0];
+    return rows[0].id;
 }
 
 const getRoleID = async (connection, userInput) => {
@@ -244,4 +347,10 @@ const getRoleID = async (connection, userInput) => {
 
     return rows[0];
 }
+
+const deleteDepartment = async (connection, userInput) => {
+    departmentID = await getDepartmentInfoDelete(connection, userInput);
+}
+
+const getDepartmentId = async(connection), us
 main();
