@@ -1,6 +1,9 @@
 const mysql = require("mysql2/promise");
 const inquirer = require("inquirer");
-
+const departments = require("./Develop/departments");
+const role = require("./Develop/role");
+const employee = require("./Develop/employee");
+// const userPrompt = require("./Develop/prompt");
 
 // const PORT = process.env.PORT || 8080;
 let connection;
@@ -23,62 +26,6 @@ const main = async () => {
     }
 };
 
-
-const viewDepartments = async (connection) => {
-    const sqlQuery = "SELECT * FROM department";
-
-    const [rows, fields] = await connection.query(sqlQuery);
-
-    console.table(rows);
-
-    userPrompt(connection);
-};
-
-const viewDepartmentsNoPrompt = async (connection) => {
-    const sqlQuery = "SELECT * FROM department";
-
-    const [rows, fields] = await connection.query(sqlQuery);
-
-    console.table(rows);
-};
-
-const viewRoles = async (connection) => {
-    const sqlQuery = "SELECT * FROM role";
-
-    const [rows, fields] = await connection.query(sqlQuery);
-
-    console.table(rows);
-
-    userPrompt(connection);
-};
-
-const viewRolesNpPrompt = async (connection) => {
-    const sqlQuery = "SELECT * FROM role";
-
-    const [rows, fields] = await connection.query(sqlQuery);
-
-    console.table(rows);
-};
-
-const viewEmployees = async (connection) => {
-    const sqlQuery = "SELECT * FROM employee";
-
-    const [rows, fields] = await connection.query(sqlQuery);
-
-    console.table(rows);
-
-    userPrompt(connection);
-};
-
-const viewEmployeesNoPrompt = async (connection) => {
-    const sqlQuery = "SELECT * FROM employee";
-
-    const [rows, fields] = await connection.query(sqlQuery);
-
-    console.table(rows);
-
-};
-
 async function userPrompt(connection) {
     const userInput = await inquirer
         .prompt([
@@ -92,55 +39,56 @@ async function userPrompt(connection) {
                         "Add Department",
                         "Add Role",
                         "View Departments",
-                        "View Roles",
-                        "View Employees",
-                        "View Employees by Manager",
+                        // "View Roles",
+                        // "View Employees",
+                        // "View Employees by Manager",
                         // "Update Employee",
                         // "Update Employee Manager",
-                        "Update Employee Role",
-                        "Delete Department",
-                        "Delete Role",
-                        "Delete Employee",
+                        // "Update Employee Role",
+                        // "Delete Department",
+                        // "Delete Role",
+                        // "Delete Employee",
                         "Exit"
                     ]
             }
         ])
     switch (userInput.optionPicked) {
         case "Add Employee":
-            addEmployee(connection);
+            employee.addEmployee(connection, userPrompt);
             break;
         case "Add Department":
-            addDepartment(connection);
+            departments.addDepartment(connection, userPrompt);
             break;
         case "Add Role":
-            addRole(connection);
+            role.addRole(connection, userPrompt);
             break;
         case "View Departments":
-            viewDepartments(connection);
+            departments.viewDepartments(connection, userPrompt);
+            // viewDepartments(connection);
             break;
         case "View Roles":
-            viewRoles(connection);
+            role.viewRoles(connection, userPrompt);
             break;
         case "View Employees":
-            viewEmployees(connection);
+            employee.viewEmployees(connection, userPrompt);
             break;
         case "View Employees by Manager":
-            viewEmployeesByManager(connection);
+            employee.viewEmployeesByManager(connection, userPrompt);
             break;
         case "Update Employee Role":
-            updateEmployeeRole(connection);
+            employee.updateEmployeeRole(connection, userPrompt);
             break;
         case "Update Employee Manager":
-            updateEmployeeManager(connection);
+            employee.updateEmployeeManager(connection, userPrompt);
             break;
         case "Delete Department":
-            deleteDepartment(connection);
+            departments.deleteDepartment(connection, userPrompt);
             break;
         case "Delete Role":
-            deleteRole(connection);
+            role.deleteRole(connection, userPrompt);
             break;
         case "Delete Employee":
-            deleteEmployee(connection);
+            employee.deleteEmployee(connection, userPrompt);
         case "Exit":
             connection.end();
         default:
@@ -148,209 +96,6 @@ async function userPrompt(connection) {
     }
 };
 
-const addEmployee = async (connection) => {
-    try {
-        const employeeInfo = await getEmployeeInfo(connection);
-        console.log(employeeInfo);
-        console.log("----------------------------------------------------");
-        console.log(employeeInfo.userInput.firstName);
-        console.log("----------------------------------------------------");
-        console.log("Adding Employee....................");
-        const sqlQuery = "INSERT INTO employee SET ?";
-        const params = {
-            first_name: `${employeeInfo.userInput.firstName}`,
-            last_name: `${employeeInfo.userInput.lastName}`,
-            role_id: employeeInfo.roleID.id,
-            manager_id: employeeInfo.managerID
-        }
-
-        const [rows, fields] = await connection.query(sqlQuery, params);
-
-        console.table(rows);
-    } catch (error) {
-        console.log(error);
-    }
-
-    await viewEmployeesNoPrompt(connection);
-    userPrompt(connection);
-};
-
-const addDepartment = async (connection) => {
-    try {
-        await viewDepartmentsNoPrompt(connection);
-
-        const departmentName = await getDepartmentInfo(connection);
-
-        const sqlQuery = "INSERT INTO department SET ?";
-        const params = {
-            name: `${departmentName.userInput.departmentName}`,
-        }
-
-        const [rows, fields] = await connection.query(sqlQuery, params);
-
-        console.table(rows);
-
-        await viewDepartmentsNoPrompt(connection);
-    } catch (error) {
-        console.log(error);
-    }
-};
-
-
-const addRole = async (connection) => {
-    try {
-        await viewRoleNoPrompt(connection);
-
-        const departmentName = await getRoleInfo(connection);
-
-        const sqlQuery = "INSERT INTO role SET ?";
-        const params = {
-            name: `${roleName.userInput.roleName}`,
-        }
-
-        const [rows, fields] = await connection.query(sqlQuery, params);
-
-        console.table(rows);
-
-        await viewDepartmentsNoPrompt(connection);
-    } catch (error) {
-        console.log(error);
-    }
-};
-const getEmployeeInfo = async (connection) => {
-    const userInput = await inquirer
-        .prompt([
-            {
-                type: "input",
-                name: "firstName",
-                message: "What is the Employees first name?"
-            }
-            ,
-            {
-                type: "input",
-                name: "lastName",
-                message: "What is the employees last name?"
-            },
-            {
-                type: "list",
-                name: "selectedManager",
-                message: "Please select a manager:",
-                choices: async () => {
-                    const rows = await getManager(connection);
-                    let employees = [];
-                    for (let i = 0; i < rows.length; i++) {
-                        employees.push(rows[i].first_name + " " + rows[i].last_name);
-                    }
-                    employees.push("None");
-                    console.log(rows);
-                    console.log(employees);
-                    return employees;
-                }
-            },
-            {
-                type: "list",
-                name: "selectedRole",
-                message: "What role will this employee play:",
-                choices: async () => {
-                    const rows = await getRoles(connection);
-                    let roles = [];
-                    for (let i = 0; i < rows.length; i++) {
-                        roles.push(rows[i].title);
-                    }
-                    console.log(rows);
-                    console.log(roles);
-                    return roles;
-                }
-            }
-        ])
-
-    const managerID = await getManagerID(connection, userInput);
-    const roleID = await getRoleID(connection, userInput);
-
-    console.log("-----------------------------" + managerID);
-    return { userInput, managerID, roleID }
-}
-
-const getManager = async (connection) => {
-    sqlQuery = "SELECT first_name, last_name FROM employee";
-
-    const [rows, fields] = await connection.query(sqlQuery);
-
-    console.table(rows)
-
-    return rows;
-}
-
-const getRoles = async (connection) => {
-    sqlQuery = "SELECT title FROM role";
-
-    const [rows, fields] = await connection.query(sqlQuery);
-
-    console.table(rows)
-
-    return rows;
-}
-
-const getDepartmentInfoDelete = async (connection) => {
-    const userInput = await inquirer
-        .prompt([
-            {
-                type: "input",
-                name: "departmentName",
-                message: "What is the name of the Department you would like to delete?"
-            }
-        ])
-    return userInput;
-};
-
-const getDepartmentInfo = async (connection) => {
-    const userInput = await inquirer
-        .prompt([
-            {
-                type: "input",
-                name: "departmentName",
-                message: "What is the name of the Department you would like to add?"
-            }
-        ])
-    return userInput;
-};
-
-
-const getManagerID = async (connection, userInput) => {
-    if (userInput.selectedManager === "None") {
-        return null;
-    }
-
-    sqlQuery = "SELECT id FROM employee WHERE ? AND ?"
-    lastName = userInput.selectedManager.split(" ")[1];
-    firstName = userInput.selectedManager.split(" ")[0];
-    console.log(lastName + " " + firstName);
-    params = [{ first_name: firstName }, { last_name: lastName }];
-
-    const [rows, fields] = await connection.query(sqlQuery, params);
-
-    console.table(rows)
-
-    return rows[0].id;
-}
-
-const getRoleID = async (connection, userInput) => {
-    sqlQuery = "SELECT id FROM role WHERE ?"
-    // lastName = userInput.selectedManager.split(" ")[1];
-    // firstName = userInput.selectedManager.split(" ")[0];
-    // console.log(lastName + " " + firstName);
-    params = { title: userInput.selectedRole };
-
-    const [rows, fields] = await connection.query(sqlQuery, params);
-
-    console.table(rows)
-
-    return rows[0];
-}
-
-const deleteDepartment = async (connection, userInput) => {
-    departmentID = await getDepartmentInfoDelete(connection, userInput);
-}
-
-const getDepartmentId = async(connection), us
 main();
+
+module.exports = userPrompt;
