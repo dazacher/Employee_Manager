@@ -2,8 +2,8 @@
 const departments = require("./departments");
 const inquirer = require("inquirer");
 
-const viewRoles = async (connection) => {
-    const sqlQuery = "SELECT * FROM role";
+const viewRoles = async (connection, userPrompt) => {
+    const sqlQuery = "SELECT r.id, r.title, r.salary, d.name AS Department FROM role r INNER JOIN department d ON d.id = r.department_id ORDER BY r.id;";
 
     const [rows, fields] = await connection.query(sqlQuery);
 
@@ -20,7 +20,7 @@ const viewRolesNoPrompt = async (connection) => {
     console.table(rows);
 };
 
-const addRole = async (connection) => {
+const addRole = async (connection, userPrompt) => {
     try {
         await viewRolesNoPrompt(connection);
 
@@ -37,7 +37,7 @@ const addRole = async (connection) => {
 
         console.table(rows);
 
-        await departments.viewDepartmentsNoPrompt(connection);
+        await departments.viewRolesNoPrompt(connection);
         await userPrompt(connection);
     } catch (error) {
         console.log(error);

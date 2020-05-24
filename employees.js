@@ -39,8 +39,8 @@ async function userPrompt(connection) {
                         "Add Department",
                         "Add Role",
                         "View Departments",
-                        // "View Roles",
-                        // "View Employees",
+                        "View Roles",
+                        "View Employees",
                         // "View Employees by Manager",
                         // "Update Employee",
                         // "Update Employee Manager",
@@ -64,7 +64,6 @@ async function userPrompt(connection) {
             break;
         case "View Departments":
             departments.viewDepartments(connection, userPrompt);
-            // viewDepartments(connection);
             break;
         case "View Roles":
             role.viewRoles(connection, userPrompt);

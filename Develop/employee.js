@@ -3,8 +3,12 @@ const inquirer = require("inquirer");
 const department = require("./departments")
 const role = require("./role")
 
-const viewEmployees = async (connection) => {
-    const sqlQuery = "SELECT * FROM employee";
+const viewEmployees = async (connection, userPrompt) => {
+    let sqlQuery = `SELECT emp.id AS Employee_ID, emp.first_name, emp.last_name, r.title, r.salary, CONCAT(mgr.first_name , ' ', mgr.last_name) AS Manager `;
+    sqlQuery += `FROM employee emp `;
+    sqlQuery += `LEFT JOIN employee mgr ON emp.manager_id = mgr.id `;
+    sqlQuery += `INNER JOIN role r ON emp.role_id = r.id `;
+    sqlQuery += `INNER JOIN department d ON r.department_id = d.id;`;
 
     const [rows, fields] = await connection.query(sqlQuery);
 
@@ -50,7 +54,7 @@ const addEmployee = async (connection, userPrompt) => {
     await userPrompt(connection);
 };
 
-const getEmployeeInfo = async (connection, userPrompt) => {
+const getEmployeeInfo = async (connection) => {
     const userInput = await inquirer
         .prompt([
             {
