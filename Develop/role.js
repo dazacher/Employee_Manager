@@ -1,4 +1,3 @@
-// const userPrompt = require("./prompt.js")
 const departments = require("./departments");
 const inquirer = require("inquirer");
 
@@ -37,7 +36,7 @@ const addRole = async (connection, userPrompt) => {
 
         console.table(rows);
 
-        await departments.viewRolesNoPrompt(connection);
+        await viewRolesNoPrompt(connection);
         await userPrompt(connection);
     } catch (error) {
         console.log(error);
@@ -65,6 +64,8 @@ const getRoleID = async (connection, userInput) => {
 
     return rows[0];
 };
+
+
 
 const getRoleInfo = async (connection) => {
     const userInput = await inquirer
@@ -96,10 +97,63 @@ const getRoleInfo = async (connection) => {
             }
         ])
 
-    const departmentID = await departments.getDepartmentID(connection, userInput);
-
     return { userInput, departmentID };
 };
+
+const getRoleInfoUpdate = async (connection, getManager) => {
+    const userInput = await inquirer
+        .prompt([
+            {
+                type: "list",
+                name: "selectedEmployee",
+                message: "Please pick an employee to update the Role of:",
+                choices: async () => {
+                    const rows = await getManager(connection);
+                    let employees = [];
+                    for (let i = 0; i < rows.length; i++) {
+                        employees.push(rows[i].first_name + " " + rows[i].last_name);
+                    }
+                    employees.push("None");
+                    console.log(rows);
+                    console.log(employees);
+                    return employees;
+                }
+            },
+            {
+                type: "list",
+                name: "selectedRole",
+                message: "What is the name of the role you would like to change to?",
+                choices: async () => {
+                    const rows = await getRoles(connection);
+                    let roles = [];
+                    for (let i = 0; i < rows.length; i++) {
+                        roles.push(rows[i].title);
+                    }
+                    console.log(rows);
+                    console.log(roles);
+                    return roles;
+                }
+            },
+            {
+                type: "list",
+                name: "selectedManager",
+                message: "Please select the name of the Employees new Manager?",
+                choices: async () => {
+                    const rows = await getManager(connection);
+                    let managers = [];
+                    for (let i = 0; i < rows.length; i++) {
+                        managers.push(rows[i].first_name + " " + rows[i].last_name);
+                    }
+                    managers.push("None");
+                    console.log(rows);
+                    console.log(managers);
+                    return managers;
+                }
+            }
+        ])
+    return userInput;
+};
+
 
 module.exports = {
     viewRoles: viewRoles,
@@ -107,5 +161,6 @@ module.exports = {
     addRole: addRole,
     getRoles: getRoles,
     getRoleID: getRoleID,
-    getRoleInfo: getRoleInfo
+    getRoleInfo: getRoleInfo,
+    getRoleInfoUpdate: getRoleInfoUpdate
 }

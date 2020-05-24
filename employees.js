@@ -44,7 +44,7 @@ async function userPrompt(connection) {
                         // "View Employees by Manager",
                         // "Update Employee",
                         // "Update Employee Manager",
-                        // "Update Employee Role",
+                        "Update Employee Role",
                         // "Delete Department",
                         // "Delete Role",
                         // "Delete Employee",
@@ -54,7 +54,7 @@ async function userPrompt(connection) {
         ])
     switch (userInput.optionPicked) {
         case "Add Employee":
-            employee.addEmployee(connection, userPrompt);
+            employee.addEmployee(connection, userPrompt, getManager);
             break;
         case "Add Department":
             departments.addDepartment(connection, userPrompt);
@@ -75,7 +75,7 @@ async function userPrompt(connection) {
             employee.viewEmployeesByManager(connection, userPrompt);
             break;
         case "Update Employee Role":
-            employee.updateEmployeeRole(connection, userPrompt);
+            updateEmployeeRole(connection);
             break;
         case "Update Employee Manager":
             employee.updateEmployeeManager(connection, userPrompt);
@@ -94,6 +94,49 @@ async function userPrompt(connection) {
             console.log("Please chose an Employee to add.");
     }
 };
+
+const getManager = async (connection) => {
+    sqlQuery = "SELECT first_name, last_name FROM employee";
+
+    const [rows, fields] = await connection.query(sqlQuery);
+
+    console.table(rows)
+
+    return rows;
+};
+
+const updateEmployeeRole = async (connection) => {
+    try {
+        const roleInfo = await role.getRoleInfoUpdate(connection, getManager);
+        console.log(roleInfo);
+        employeeLastName = roleInfo.selectedEmployee.split(" ")[1];
+        employeeFirstName = roleInfo.selectedEmployee.split(" ")[0];
+        managerLastName = roleInfo.selectedManager.split(" ")[1];
+        managerFirstName = roleInfo.selectedManager.split(" ")[0];
+        let sqlQuery = "UPDATE employee ";
+        sqlQuery += "SET role_id = (SELECT id FROM role WHERE ?), manager_id = (SELECT * FROM (SELECT id FROM employee WHERE ? AND ?)tblTmp) ";
+        sqlQuery += "WHERE id = (SELECT * FROM(SELECT id FROM employee WHERE ? AND ?)tblTmp);";
+
+        const params = [
+            { title: roleInfo.selectedRole },
+            { first_name: managerFirstName },
+            { last_name: managerLastName },
+            { first_name: employeeFirstName },
+            { last_name: employeeLastName }
+        ];
+
+        console.log(params);
+        console.log(sqlQuery);
+        const [rows, fields] = await connection.query(sqlQuery, params);
+
+        console.table(rows);
+        await employee.viewEmployees(connection, userPrompt);
+    } catch (error) {
+        console.log(error);
+    }
+};
+
+
 
 main();
 

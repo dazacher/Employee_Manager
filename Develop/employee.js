@@ -1,7 +1,6 @@
-// const userPrompt = require("./prompt.js")
 const inquirer = require("inquirer");
-const department = require("./departments")
-const role = require("./role")
+const department = require("./departments");
+const role = require("./role");
 
 const viewEmployees = async (connection, userPrompt) => {
     let sqlQuery = `SELECT emp.id AS Employee_ID, emp.first_name, emp.last_name, r.title, r.salary, CONCAT(mgr.first_name , ' ', mgr.last_name) AS Manager `;
@@ -27,21 +26,18 @@ const viewEmployeesNoPrompt = async (connection) => {
 };
 
 
-const addEmployee = async (connection, userPrompt) => {
+const addEmployee = async (connection, userPrompt, getManager) => {
     try {
-        const employeeInfo = await getEmployeeInfo(connection);
+        const employeeInfo = await getEmployeeInfo(connection, getManager);
         console.log(employeeInfo);
-        console.log("----------------------------------------------------");
-        console.log(employeeInfo.userInput.firstName);
-        console.log("----------------------------------------------------");
-        console.log("Adding Employee....................");
+
         const sqlQuery = "INSERT INTO employee SET ?";
         const params = {
             first_name: `${employeeInfo.userInput.firstName}`,
             last_name: `${employeeInfo.userInput.lastName}`,
             role_id: employeeInfo.roleID.id,
-            manager_id: employeeInfo.managerID,
-        }
+            manager_id: employeeInfo.managerID
+        };
 
         const [rows, fields] = await connection.query(sqlQuery, params);
 
@@ -108,26 +104,16 @@ const getEmployeeInfo = async (connection) => {
     return { userInput, managerID, roleID }
 };
 
-const getManager = async (connection) => {
-    sqlQuery = "SELECT first_name, last_name FROM employee";
-
-    const [rows, fields] = await connection.query(sqlQuery);
-
-    console.table(rows)
-
-    return rows;
-};
-
 const getManagerID = async (connection, userInput) => {
     if (userInput.selectedManager === "None") {
         return null;
     }
 
-    sqlQuery = "SELECT id FROM employee WHERE ? AND ?"
+    const sqlQuery = "SELECT id FROM employee WHERE ? AND ?"
     lastName = userInput.selectedManager.split(" ")[1];
     firstName = userInput.selectedManager.split(" ")[0];
     console.log(lastName + " " + firstName);
-    params = [{ first_name: firstName }, { last_name: lastName }];
+    const params = [{ first_name: firstName }, { last_name: lastName }];
 
     const [rows, fields] = await connection.query(sqlQuery, params);
 
@@ -141,6 +127,5 @@ module.exports = {
     viewEmployeesNoPrompt: viewEmployeesNoPrompt,
     addEmployee: addEmployee,
     getEmployeeInfo: getEmployeeInfo,
-    getManager: getManager,
     getManagerID: getManagerID
 }
