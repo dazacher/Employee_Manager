@@ -21,7 +21,7 @@ const viewDepartmentsNoPrompt = async (connection) => {
     console.table(rows);
 };
 
-const addDepartment = async (connection) => {
+const addDepartment = async (connection, userPrompt) => {
     try {
         await viewDepartmentsNoPrompt(connection);
 
@@ -62,6 +62,7 @@ const getDepartmentInfoDelete = async (connection) => {
                 message: "What is the name of the Department you would like to delete?"
             }
         ])
+    console.log(userInput);
     return userInput;
 };
 
@@ -79,7 +80,7 @@ const getDepartmentInfo = async (connection) => {
 
 const getDepartmentID = async (connection, userInput) => {
     const sqlQuery = "SELECT id FROM department WHERE ?"
-
+    console.log(userInput);
     const params = { name: userInput.selectedDepartment };
 
     const [rows, fields] = await connection.query(sqlQuery, params);
@@ -90,8 +91,30 @@ const getDepartmentID = async (connection, userInput) => {
 };
 
 const deleteDepartment = async (connection, userInput) => {
-    departmentID = await getDepartmentInfoDelete(connection, userInput);
+    try {
+        departmentName = await getDepartmentInfoDelete(connection, userInput);
+        departmentID = await getDepartmentID(connection, { selectedDepartment: departmentName.departmentName });
+        console.log(departmentID);
+        console.log(departmentName);
+        sqlQuery1 = "UPDATE role SET department_id = NULL WHERE ?";
+        params1 = { department_id: departmentID.id }
+
+        const [rows1, fields1] = await connection.query(sqlQuery1, params1);
+
+        sqlQuery = "DELETE FROM department WHERE ?";
+        params = { name: departmentName.departmentName };
+
+        const [rows, fields] = await connection.query(sqlQuery, params);
+
+        console.table(rows)
+        // await role.viewRolesNoPrompt(connection);
+        await viewDepartmentsNoPrompt(connection);
+    } catch (error) {
+        console.log(error);
+    }
 }
+
+
 
 module.exports = {
     viewDepartments: viewDepartments,

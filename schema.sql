@@ -14,9 +14,10 @@ CREATE TABLE role(
 id INT AUTO_INCREMENT NOT NULL,
 title VARCHAR(30),
 salary DECIMAL(8,2),
-department_id INT NOT NULL,
+department_id INT,
 FOREIGN KEY(department_id)
-	REFERENCES department(id),
+	REFERENCES department(id)
+    ON UPDATE SET NULL,
 PRIMARY KEY (id)
 );
 
@@ -30,6 +31,7 @@ FOREIGN KEY(manager_id)
 	REFERENCES employee(id)
     ON UPDATE SET NULL,
 FOREIGN KEY(role_id)
-	REFERENCES role(id),
+	REFERENCES role(id)
+    ON UPDATE SET NULL,
 PRIMARY KEY(id)
 );

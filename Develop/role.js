@@ -2,7 +2,7 @@ const departments = require("./departments");
 const inquirer = require("inquirer");
 
 const viewRoles = async (connection, userPrompt) => {
-    const sqlQuery = "SELECT r.id, r.title, r.salary, d.name AS Department FROM role r INNER JOIN department d ON d.id = r.department_id ORDER BY r.id;";
+    const sqlQuery = "SELECT r.id, r.title, r.salary, d.name AS Department FROM role r LEFT JOIN department d ON d.id = r.department_id ORDER BY r.id;";
 
     const [rows, fields] = await connection.query(sqlQuery);
 
@@ -96,6 +96,7 @@ const getRoleInfo = async (connection) => {
                 }
             }
         ])
+    const departmentID = await departments.getDepartmentID(connection, userInput);
 
     return { userInput, departmentID };
 };

@@ -3,11 +3,12 @@ const department = require("./departments");
 const role = require("./role");
 
 const viewEmployees = async (connection, userPrompt) => {
-    let sqlQuery = `SELECT emp.id AS Employee_ID, emp.first_name, emp.last_name, r.title, r.salary, CONCAT(mgr.first_name , ' ', mgr.last_name) AS Manager `;
-    sqlQuery += `FROM employee emp `;
-    sqlQuery += `LEFT JOIN employee mgr ON emp.manager_id = mgr.id `;
-    sqlQuery += `INNER JOIN role r ON emp.role_id = r.id `;
-    sqlQuery += `INNER JOIN department d ON r.department_id = d.id;`;
+    let sqlQuery = "SELECT emp.id AS Employee_ID, emp.first_name, emp.last_name, r.title, r.salary, CONCAT(mgr.first_name , ' ', mgr.last_name) AS Manager, d.name AS Department_Name ";
+    sqlQuery += "FROM employee emp ";
+    sqlQuery += "LEFT JOIN employee mgr ON emp.manager_id = mgr.id ";
+    sqlQuery += "INNER JOIN role r ON emp.role_id = r.id ";
+    sqlQuery += "LEFT JOIN department d ON r.department_id = d.id ";
+    sqlQuery += "ORDER BY emp.id;";
 
     const [rows, fields] = await connection.query(sqlQuery);
 
@@ -17,7 +18,12 @@ const viewEmployees = async (connection, userPrompt) => {
 };
 
 const viewEmployeesNoPrompt = async (connection) => {
-    const sqlQuery = "SELECT * FROM employee";
+    let sqlQuery = "SELECT emp.id AS Employee_ID, emp.first_name, emp.last_name, r.title, r.salary, CONCAT(mgr.first_name , ' ', mgr.last_name) AS Manager, d.name AS Department_Name ";
+    sqlQuery += "FROM employee emp ";
+    sqlQuery += "LEFT JOIN employee mgr ON emp.manager_id = mgr.id ";
+    sqlQuery += "INNER JOIN role r ON emp.role_id = r.id ";
+    sqlQuery += "LEFT JOIN department d ON r.department_id = d.id ";
+    sqlQuery += "ORDER BY emp.id;";
 
     const [rows, fields] = await connection.query(sqlQuery);
 
@@ -50,7 +56,7 @@ const addEmployee = async (connection, userPrompt, getManager) => {
     await userPrompt(connection);
 };
 
-const getEmployeeInfo = async (connection) => {
+const getEmployeeInfo = async (connection, getManager) => {
     const userInput = await inquirer
         .prompt([
             {
@@ -104,6 +110,33 @@ const getEmployeeInfo = async (connection) => {
     return { userInput, managerID, roleID }
 };
 
+const totalUtilizedEmployeedBudget = async (connection, userPrompt) => {
+    let sqlQuery = "SELECT COUNT(*) AS Total_Employees, SUM(r.salary) AS Total_Salaries, d.name AS Department_Name ";
+    sqlQuery += "FROM employee e ";
+    sqlQuery += "LEFT JOIN role r ON r.id = e.role_id ";
+    sqlQuery += "LEFT JOIN department d ON d.id = r.department_id ";
+    sqlQuery += "GROUP BY d.id";
+
+    const [rows, fields] = await connection.query(sqlQuery);
+
+    console.table(rows)
+
+    await userPrompt(connection);
+};
+
+const viewEmployeesByManager = async (connection, userPrompt) => {
+    let sqlQuery = "SELECT emp.first_name, emp.last_name,  CONCAT(mgr.first_name , ' ', mgr.last_name) AS Manager ";
+    sqlQuery += "FROM employee emp ";
+    sqlQuery += "INNER JOIN employee mgr ON emp.manager_id = mgr.id";
+
+    const [rows, fields] = await connection.query(sqlQuery);
+
+    console.table(rows)
+
+    await userPrompt(connection);
+
+};
+
 const getManagerID = async (connection, userInput) => {
     if (userInput.selectedManager === "None") {
         return null;
@@ -122,10 +155,13 @@ const getManagerID = async (connection, userInput) => {
     return rows[0].id;
 };
 
+
 module.exports = {
     viewEmployees: viewEmployees,
     viewEmployeesNoPrompt: viewEmployeesNoPrompt,
     addEmployee: addEmployee,
     getEmployeeInfo: getEmployeeInfo,
-    getManagerID: getManagerID
+    getManagerID: getManagerID,
+    viewEmployeesByManager: viewEmployeesByManager,
+    totalUtilizedEmployeedBudget: totalUtilizedEmployeedBudget
 }
