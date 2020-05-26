@@ -1,7 +1,5 @@
-// const userPrompt = require("./prompt.js")
-// console.log(userPrompt);
 const inquirer = require("inquirer");
-// const userPrompt = require("../employees");
+const view = require("./promptGetUpdateView");
 
 const viewDepartments = async (connection, userPrompt) => {
     const sqlQuery = "SELECT * FROM department";
@@ -57,9 +55,19 @@ const getDepartmentInfoDelete = async (connection) => {
     const userInput = await inquirer
         .prompt([
             {
-                type: "input",
+                type: "list",
                 name: "departmentName",
-                message: "What is the name of the Department you would like to delete?"
+                message: "Please select the name of the Department you would like to delete:",
+                choices: async () => {
+                    const rows = await getDepartments(connection);
+                    let department = [];
+                    for (let i = 0; i < rows.length; i++) {
+                        department.push(rows[i].name);
+                    }
+                    console.log(rows);
+                    console.log(department);
+                    return department;
+                }
             }
         ])
     console.log(userInput);
@@ -90,9 +98,9 @@ const getDepartmentID = async (connection, userInput) => {
     return rows[0];
 };
 
-const deleteDepartment = async (connection, userInput) => {
+const deleteDepartment = async (connection, userPrompt, viewRolesNoPrompt) => {
     try {
-        departmentName = await getDepartmentInfoDelete(connection, userInput);
+        departmentName = await getDepartmentInfoDelete(connection);
         departmentID = await getDepartmentID(connection, { selectedDepartment: departmentName.departmentName });
         console.log(departmentID);
         console.log(departmentName);
@@ -107,15 +115,13 @@ const deleteDepartment = async (connection, userInput) => {
         const [rows, fields] = await connection.query(sqlQuery, params);
 
         console.table(rows)
-        // await role.viewRolesNoPrompt(connection);
+        await viewRolesNoPrompt(connection);
         await viewDepartmentsNoPrompt(connection);
+        await userPrompt(connection);
     } catch (error) {
         console.log(error);
     }
-}
-
-
-
+};
 module.exports = {
     viewDepartments: viewDepartments,
     viewDepartmentsNoPrompt: viewDepartmentsNoPrompt,

@@ -1,4 +1,5 @@
 const departments = require("./departments");
+const view = require("./promptGetUpdateView");
 const inquirer = require("inquirer");
 
 const viewRoles = async (connection, userPrompt) => {
@@ -11,15 +12,9 @@ const viewRoles = async (connection, userPrompt) => {
     userPrompt(connection);
 };
 
-const viewRolesNoPrompt = async (connection) => {
-    const sqlQuery = "SELECT * FROM role";
 
-    const [rows, fields] = await connection.query(sqlQuery);
 
-    console.table(rows);
-};
-
-const addRole = async (connection, userPrompt) => {
+const addRole = async (connection, userPrompt, viewRolesNoPrompt) => {
     try {
         await viewRolesNoPrompt(connection);
 
@@ -114,7 +109,7 @@ const getRoleInfoUpdate = async (connection, getManager) => {
                     for (let i = 0; i < rows.length; i++) {
                         employees.push(rows[i].first_name + " " + rows[i].last_name);
                     }
-                    employees.push("None");
+
                     console.log(rows);
                     console.log(employees);
                     return employees;
@@ -123,7 +118,7 @@ const getRoleInfoUpdate = async (connection, getManager) => {
             {
                 type: "list",
                 name: "selectedRole",
-                message: "What is the name of the role you would like to change to?",
+                message: "Please select the name of the role you would like to change to:",
                 choices: async () => {
                     const rows = await getRoles(connection);
                     let roles = [];
@@ -138,7 +133,7 @@ const getRoleInfoUpdate = async (connection, getManager) => {
             {
                 type: "list",
                 name: "selectedManager",
-                message: "Please select the name of the Employees new Manager?",
+                message: "Please select the name of the Employees new Manager:",
                 choices: async () => {
                     const rows = await getManager(connection);
                     let managers = [];
@@ -158,7 +153,6 @@ const getRoleInfoUpdate = async (connection, getManager) => {
 
 module.exports = {
     viewRoles: viewRoles,
-    viewRolesNoPrompt: viewRolesNoPrompt,
     addRole: addRole,
     getRoles: getRoles,
     getRoleID: getRoleID,

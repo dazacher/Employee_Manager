@@ -57,72 +57,129 @@ const addEmployee = async (connection, userPrompt, getManager) => {
 };
 
 const getEmployeeInfo = async (connection, getManager) => {
-    const userInput = await inquirer
-        .prompt([
-            {
-                type: "input",
-                name: "firstName",
-                message: "What is the Employees first name?"
-            }
-            ,
-            {
-                type: "input",
-                name: "lastName",
-                message: "What is the employees last name?"
-            },
-            {
-                type: "list",
-                name: "selectedManager",
-                message: "Please select a manager:",
-                choices: async () => {
-                    const rows = await getManager(connection);
-                    let employees = [];
-                    for (let i = 0; i < rows.length; i++) {
-                        employees.push(rows[i].first_name + " " + rows[i].last_name);
-                    }
-                    employees.push("None");
-                    console.log(rows);
-                    console.log(employees);
-                    return employees;
+    try {
+
+        const userInput = await inquirer
+            .prompt([
+                {
+                    type: "input",
+                    name: "firstName",
+                    message: "What is the Employees first name?"
                 }
-            },
-            {
-                type: "list",
-                name: "selectedRole",
-                message: "What role will this employee play:",
-                choices: async () => {
-                    const rows = await role.getRoles(connection);
-                    let roles = [];
-                    for (let i = 0; i < rows.length; i++) {
-                        roles.push(rows[i].title);
+                ,
+                {
+                    type: "input",
+                    name: "lastName",
+                    message: "What is the employees last name?"
+                },
+                {
+                    type: "list",
+                    name: "selectedManager",
+                    message: "Please select a manager:",
+                    choices: async () => {
+                        const rows = await getManager(connection);
+                        let employees = [];
+                        for (let i = 0; i < rows.length; i++) {
+                            employees.push(rows[i].first_name + " " + rows[i].last_name);
+                        }
+                        employees.push("None");
+                        console.log(rows);
+                        console.log(employees);
+                        return employees;
                     }
-                    console.log(rows);
-                    console.log(roles);
-                    return roles;
+                },
+                {
+                    type: "list",
+                    name: "selectedRole",
+                    message: "What role will this employee play:",
+                    choices: async () => {
+                        const rows = await role.getRoles(connection);
+                        let roles = [];
+                        for (let i = 0; i < rows.length; i++) {
+                            roles.push(rows[i].title);
+                        }
+                        console.log(rows);
+                        console.log(roles);
+                        return roles;
+                    }
                 }
-            }
-        ])
+            ])
+
+    } catch (error) {
+        console.log(error);
+    }
 
     const managerID = await getManagerID(connection, userInput);
     const roleID = await role.getRoleID(connection, userInput);
 
     console.log("-----------------------------" + managerID);
-    return { userInput, managerID, roleID }
+    return { userInput, managerID, roleID };
 };
 
 const totalUtilizedEmployeedBudget = async (connection, userPrompt) => {
-    let sqlQuery = "SELECT COUNT(*) AS Total_Employees, SUM(r.salary) AS Total_Salaries, d.name AS Department_Name ";
-    sqlQuery += "FROM employee e ";
-    sqlQuery += "LEFT JOIN role r ON r.id = e.role_id ";
-    sqlQuery += "LEFT JOIN department d ON d.id = r.department_id ";
-    sqlQuery += "GROUP BY d.id";
+    try {
 
-    const [rows, fields] = await connection.query(sqlQuery);
+        let sqlQuery = "SELECT COUNT(*) AS Total_Employees, SUM(r.salary) AS Total_Salaries, d.name AS Department_Name ";
+        sqlQuery += "FROM employee e ";
+        sqlQuery += "LEFT JOIN role r ON r.id = e.role_id ";
+        sqlQuery += "LEFT JOIN department d ON d.id = r.department_id ";
+        sqlQuery += "GROUP BY d.id";
 
-    console.table(rows)
+        const [rows, fields] = await connection.query(sqlQuery);
 
-    await userPrompt(connection);
+        console.table(rows);
+
+        await userPrompt(connection);
+    } catch (error) {
+        console.log(error);
+    }
 };
+
+const deleteEmployee = async (connection, userPrompt, getManager) => {
+
+    try {
+        const employeeInfo = await getEmployeeName(connection, getManager);
+
+        const lastName = employeeInfo.selectedEmployee.split(" ")[1];
+        const firstName = employeeInfo.selectedEmployee.split(" ")[0];
+
+        let sqlQuery = "DELETE FROM employee WHERE ? AND ?;";
+
+        const params = [{ first_name: firstName }, { last_name: lastName }];
+
+        const [rows, fields] = await connection.query(sqlQuery, params);
+
+        console.table(rows);
+
+    } catch (error) {
+        console.log(error);
+    }
+
+    await viewEmployeesNoPrompt(connection);
+    await userPrompt(connection);
+}
+
+const getEmployeeName = async (connection, getManager) => {
+    const userInput = await inquirer
+        .prompt([
+            {
+                type: "list",
+                name: "selectedEmployee",
+                message: "Please select an Employee to Delete:",
+                choices: async () => {
+                    const rows = await getManager(connection);
+                    let employee = [];
+                    for (let i = 0; i < rows.length; i++) {
+                        employee.push(rows[i].first_name + " " + rows[i].last_name);
+                    }
+                    console.log(rows);
+                    console.log(employee);
+                    return employee;
+                }
+            }
+        ])
+    return userInput;
+}
 
 const viewEmployeesByManager = async (connection, userPrompt) => {
     let sqlQuery = "SELECT emp.first_name, emp.last_name,  CONCAT(mgr.first_name , ' ', mgr.last_name) AS Manager ";
@@ -163,5 +220,6 @@ module.exports = {
     getEmployeeInfo: getEmployeeInfo,
     getManagerID: getManagerID,
     viewEmployeesByManager: viewEmployeesByManager,
-    totalUtilizedEmployeedBudget: totalUtilizedEmployeedBudget
+    totalUtilizedEmployeedBudget: totalUtilizedEmployeedBudget,
+    deleteEmployee: deleteEmployee
 }

@@ -23,7 +23,7 @@ async function userPrompt(connection) {
                         "Total Utilized Department Budget",
                         "Delete Department",
                         // "Delete Role",
-                        // "Delete Employee",
+                        "Delete Employee",
                         "Exit"
                     ]
             }
@@ -36,7 +36,7 @@ async function userPrompt(connection) {
             departments.addDepartment(connection, userPrompt);
             break;
         case "Add Role":
-            role.addRole(connection, userPrompt);
+            role.addRole(connection, userPrompt, viewRolesNoPrompt);
             break;
         case "View Departments":
             departments.viewDepartments(connection, userPrompt);
@@ -60,13 +60,14 @@ async function userPrompt(connection) {
             employee.updateEmployeeManager(connection, userPrompt);
             break;
         case "Delete Department":
-            departments.deleteDepartment(connection, userPrompt);
+            departments.deleteDepartment(connection, userPrompt, viewRolesNoPrompt);
             break;
-        case "Delete Role":
-            role.deleteRole(connection, userPrompt);
-            break;
+        // case "Delete Role":
+        //     role.deleteRole(connection, userPrompt);
+        //     break;
         case "Delete Employee":
-            employee.deleteEmployee(connection, userPrompt);
+            employee.deleteEmployee(connection, userPrompt, getManager);
+            break;
         case "Exit":
             connection.end();
         default:
@@ -115,8 +116,18 @@ const updateEmployeeRoleAndManager = async (connection) => {
     }
 };
 
+
+const viewRolesNoPrompt = async (connection) => {
+    const sqlQuery = "SELECT r.id, r.title, r.salary, d.name AS Department FROM role r LEFT JOIN department d ON d.id = r.department_id ORDER BY r.id;";
+
+    const [rows, fields] = await connection.query(sqlQuery);
+
+    console.table(rows);
+};
+
 module.exports = {
     userPrompt: userPrompt,
     getManager: getManager,
-    updateEmployeeRoleAndManager: updateEmployeeRoleAndManager
+    updateEmployeeRoleAndManager: updateEmployeeRoleAndManager,
+    viewRolesNoPrompt: viewRolesNoPrompt
 }

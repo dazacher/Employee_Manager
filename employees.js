@@ -1,7 +1,12 @@
 const mysql = require("mysql2/promise");
-const inquirer = require("inquirer");
-
-const prompt = require("./Develop/promptGetUpdate");
+const prompt = require("./Develop/promptGetUpdateView");
+const chalk = require('chalk');
+var figlet = require('figlet');
+console.log(
+    chalk.magentaBright.bgBlueBright(
+        figlet.textSync('Employee \n Manager', { horizontalLayout: 'full', verticalLayout: 'full' })
+    )
+);
 
 let connection;
 
@@ -24,5 +29,3 @@ const main = async () => {
 };
 
 main();
-
-// module.exports = userPrompt;
