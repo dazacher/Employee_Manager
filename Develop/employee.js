@@ -105,15 +105,17 @@ const getEmployeeInfo = async (connection, getManager) => {
                 }
             ])
 
+        const managerID = await getManagerID(connection, userInput);
+        const roleID = await role.getRoleID(connection, userInput);
+
+        console.log("-----------------------------" + managerID);
+        return { userInput, managerID, roleID };
+
     } catch (error) {
         console.log(error);
     }
 
-    const managerID = await getManagerID(connection, userInput);
-    const roleID = await role.getRoleID(connection, userInput);
 
-    console.log("-----------------------------" + managerID);
-    return { userInput, managerID, roleID };
 };
 
 const totalUtilizedEmployeedBudget = async (connection, userPrompt) => {

@@ -2,6 +2,7 @@ const mysql = require("mysql2/promise");
 const prompt = require("./Develop/promptGetUpdateView");
 const chalk = require('chalk');
 var figlet = require('figlet');
+
 console.log(
     chalk.magentaBright.bgBlueBright(
         figlet.textSync('Employee \n Manager', { horizontalLayout: 'full', verticalLayout: 'full' })
