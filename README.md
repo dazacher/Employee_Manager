@@ -12,6 +12,7 @@
     * [Picture](#picture) Due you want your profile picture?
     * [Email](#email) Do you want your GitHub email?
 * [Video](#video)
+* [Link](#link)
     
 ### Author
 
@@ -63,3 +64,7 @@ dazacher2000@yahoo.com
 
 ##### Employee Manager HW Video Part 2
 <img src="./public/Assets/EmployeeManagerHWPart2.gif"/>
+
+### Link
+
+This code runs from the terminal. There is no link.
